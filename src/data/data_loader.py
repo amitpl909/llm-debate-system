@@ -7,6 +7,8 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+import urllib.request
+import urllib.error
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +143,71 @@ class DataLoader:
 
 class SampleDatasets:
     """Built-in sample datasets for testing"""
+    
+    @staticmethod
+    def load_strategy_qa_from_github(num_questions: int = 200) -> List[DebateQuestion]:
+        """Load StrategyQA dataset from GitHub or fallback to ARC-Challenge from Hugging Face"""
+        try:
+            # Try to use datasets library to load from Hugging Face
+            from datasets import load_dataset
+            
+            logger.info(f"Loading ARC-Challenge from Hugging Face ({num_questions} questions)...")
+            dataset = load_dataset("ai2_arc", "ARC-Challenge", split="train")
+            
+            questions = []
+            for idx, item in enumerate(dataset):
+                if idx >= num_questions:
+                    break
+                    
+                try:
+                    # Extract the answer text from choices
+                    answer_key = item.get("answerKey", "")
+                    choices_dict = item.get("choices", {})
+                    
+                    # choices is a dict with 'text' and 'label' keys
+                    choices_text = choices_dict.get("text", []) if isinstance(choices_dict, dict) else []
+                    
+                    # Find the answer text based on the key (A, B, C, D)
+                    answer_text = ""
+                    if answer_key and choices_text:
+                        # Map A->0, B->1, C->2, D->3
+                        choice_idx = ord(answer_key) - ord('A')
+                        if 0 <= choice_idx < len(choices_text):
+                            answer_text = choices_text[choice_idx]
+                    
+                    question = DebateQuestion(
+                        question_id=f"arc_challenge_{idx}",
+                        question=item.get("question", "").strip(),
+                        answer=answer_text if answer_text else answer_key,  # Use text if available, else key
+                        difficulty="medium",  # ARC doesn't specify difficulty
+                        source="arc_challenge",
+                        metadata={
+                            "original_id": item.get("id"),
+                            "choices": choices_text,
+                            "answer_key": answer_key
+                        }
+                    )
+                    if question.question and question.answer:
+                        questions.append(question)
+                except Exception as e:
+                    logger.warning(f"Error parsing ARC item {idx}: {str(e)}")
+                    continue
+            
+            logger.info(f"Loaded {len(questions)} questions from ARC-Challenge")
+            return questions
+        
+        except ImportError:
+            logger.warning("datasets library not available, using sample dataset...")
+            return SampleDatasets.get_commonsense_qa_sample()
+        except Exception as e:
+            logger.error(f"Error loading from Hugging Face: {str(e)}")
+            logger.info("Falling back to sample dataset...")
+            return SampleDatasets.get_commonsense_qa_sample()
+    
+    @staticmethod
+    def _load_from_github_url(num_questions: int = 200) -> List[DebateQuestion]:
+        """Attempt to load from GitHub URL as fallback"""
+        return SampleDatasets.get_commonsense_qa_sample()
     
     @staticmethod
     def get_commonsense_qa_sample() -> List[DebateQuestion]:
@@ -287,13 +354,13 @@ class SampleDatasets:
 # ============================================================================
 
 def create_dataset(dataset_type: str = "commonsense_qa", 
-                  sample_size: int = 10,
+                  sample_size: int = 200,
                   seed: Optional[int] = None) -> List[DebateQuestion]:
     """
     Factory function to create datasets
     
     Args:
-        dataset_type: "commonsense_qa", "fact_verification", or "mixed"
+        dataset_type: "commonsense_qa" (loads from GitHub), "fact_verification", or "mixed"
         sample_size: Number of questions to return
         seed: Random seed for reproducibility
     
@@ -302,7 +369,8 @@ def create_dataset(dataset_type: str = "commonsense_qa",
     """
     
     if dataset_type == "commonsense_qa":
-        questions = SampleDatasets.get_commonsense_qa_sample()
+        # Load from GitHub StrategyQA
+        questions = SampleDatasets.load_strategy_qa_from_github(num_questions=sample_size)
     elif dataset_type == "fact_verification":
         questions = SampleDatasets.get_fact_verification_sample()
     elif dataset_type == "mixed":

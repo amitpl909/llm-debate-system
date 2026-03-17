@@ -66,8 +66,8 @@ class DebateConfig:
     task_domain: str = "commonsense_qa"  # or "fact_verification"
     
     # Dataset configuration
-    sample_size: int = 100  # Start with 100 for development
-    final_sample_size: int = 150  # 100-200 as per assignment
+    sample_size: int = 200  # 100-200 as per assignment (using StrategyQA from GitHub)
+    final_sample_size: int = 200  # 100-200 as per assignment
     dataset_name: str = "strategy_qa"  # or "arc_challenge", "scifact"
 
 
@@ -288,10 +288,10 @@ def get_debug_config() -> Config:
 
 
 def get_production_config() -> Config:
-    """Get configuration for production (full experiment)"""
+    """Get configuration for production (full experiment with 200 StrategyQA questions)"""
     config = Config()
-    config.debate.sample_size = 100
-    config.debate.final_sample_size = 150
+    config.debate.sample_size = 200  # Load 200 questions from StrategyQA GitHub
+    config.debate.final_sample_size = 200  # 100-200 as per assignment
     config.debate.num_rounds = 5
     config.baseline.self_consistency_samples = 5
     config.logging.verbose = False
