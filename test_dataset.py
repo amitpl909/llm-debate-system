@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick test to verify StrategyQA dataset loading"""
+"""Quick test to verify ARC-Challenge dataset loading"""
 
 import sys
 import os
@@ -7,10 +7,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.data.data_loader import create_dataset
 
-print("Loading StrategyQA dataset from GitHub...")
+print("Loading ARC-Challenge dataset from Hugging Face...")
 try:
     questions = create_dataset('commonsense_qa', 200)
-    print(f'✓ Successfully loaded {len(questions)} questions from StrategyQA')
+    print(f'✓ Successfully loaded {len(questions)} questions from ARC-Challenge (ai2_arc)')
     if questions:
         print(f'\n📝 First question: {questions[0].question[:100]}...')
         print(f'✓ Answer: {questions[0].answer}')

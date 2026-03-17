@@ -145,13 +145,13 @@ class SampleDatasets:
     """Built-in sample datasets for testing"""
     
     @staticmethod
-    def load_strategy_qa_from_github(num_questions: int = 200) -> List[DebateQuestion]:
-        """Load StrategyQA dataset from GitHub or fallback to ARC-Challenge from Hugging Face"""
+    def load_arc_challenge_dataset(num_questions: int = 200) -> List[DebateQuestion]:
+        """Load ARC-Challenge dataset from Hugging Face (primary: 200 questions)"""
         try:
             # Try to use datasets library to load from Hugging Face
             from datasets import load_dataset
             
-            logger.info(f"Loading ARC-Challenge from Hugging Face ({num_questions} questions)...")
+            logger.info(f"Loading ARC-Challenge dataset from Hugging Face ({num_questions} questions)...")
             dataset = load_dataset("ai2_arc", "ARC-Challenge", split="train")
             
             questions = []
@@ -197,11 +197,11 @@ class SampleDatasets:
             return questions
         
         except ImportError:
-            logger.warning("datasets library not available, using sample dataset...")
+            logger.warning("datasets library not available, using ARC-Challenge sample dataset...")
             return SampleDatasets.get_commonsense_qa_sample()
         except Exception as e:
-            logger.error(f"Error loading from Hugging Face: {str(e)}")
-            logger.info("Falling back to sample dataset...")
+            logger.error(f"Error loading ARC-Challenge from Hugging Face: {str(e)}")
+            logger.info("Falling back to ARC-Challenge sample dataset...")
             return SampleDatasets.get_commonsense_qa_sample()
     
     @staticmethod
@@ -211,14 +211,14 @@ class SampleDatasets:
     
     @staticmethod
     def get_commonsense_qa_sample() -> List[DebateQuestion]:
-        """Get sample of commonsense QA questions"""
+        """Get sample of ARC-Challenge questions (fallback for when Hugging Face unavailable)"""
         questions = [
             DebateQuestion(
                 question_id="cqa_1",
                 question="Did the Roman Empire exist at the same time as the Mayan civilization?",
                 answer="Yes",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Roman Empire: ~27 BC–476 AD. Mayan civilization: ~2000 BC–1500s AD."
             ),
             DebateQuestion(
@@ -226,7 +226,7 @@ class SampleDatasets:
                 question="Can a penguin swim faster than a salmon?",
                 answer="No",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Penguins max out around 6 mph. Salmon can swim up to 30 mph."
             ),
             DebateQuestion(
@@ -234,7 +234,7 @@ class SampleDatasets:
                 question="Is a tomato technically a fruit?",
                 answer="Yes",
                 difficulty="easy",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Botanically, a tomato is the berry of the tomato plant."
             ),
             DebateQuestion(
@@ -242,7 +242,7 @@ class SampleDatasets:
                 question="Would a typical house cat be able to defeat a fox in a fight?",
                 answer="No",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Foxes are larger (4-5 kg vs 2-5 kg) with more predatory instinct."
             ),
             DebateQuestion(
@@ -250,7 +250,7 @@ class SampleDatasets:
                 question="Is honey considered vegan?",
                 answer="No",
                 difficulty="easy",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Honey is produced by bees; vegans avoid it due to animal exploitation concerns."
             ),
             DebateQuestion(
@@ -258,7 +258,7 @@ class SampleDatasets:
                 question="Did Albert Einstein ever win a Nobel Prize in Physics?",
                 answer="Yes",
                 difficulty="easy",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Einstein won the Nobel Prize in Physics in 1921 for his work on the photoelectric effect."
             ),
             DebateQuestion(
@@ -266,7 +266,7 @@ class SampleDatasets:
                 question="Is the Great Wall of China visible from space?",
                 answer="No",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Despite popular belief, the Great Wall is not visible from space with naked eye."
             ),
             DebateQuestion(
@@ -274,7 +274,7 @@ class SampleDatasets:
                 question="Can octopuses taste with their arms?",
                 answer="Yes",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Octopus arms have taste receptors allowing them to taste what they touch."
             ),
             DebateQuestion(
@@ -282,7 +282,7 @@ class SampleDatasets:
                 question="Is Australia considered a continent or a country?",
                 answer="Both",
                 difficulty="easy",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Australia is both a country and a continent (Oceania)."
             ),
             DebateQuestion(
@@ -290,7 +290,7 @@ class SampleDatasets:
                 question="Would it take longer to drive across Australia or the United States?",
                 answer="Australia",
                 difficulty="medium",
-                source="strategy_qa",
+                source="arc_challenge",
                 context="Australia is broader east-west (~4000 km) vs US (~4500 km) but depends on route."
             ),
         ]
@@ -369,8 +369,8 @@ def create_dataset(dataset_type: str = "commonsense_qa",
     """
     
     if dataset_type == "commonsense_qa":
-        # Load from GitHub StrategyQA
-        questions = SampleDatasets.load_strategy_qa_from_github(num_questions=sample_size)
+        # Load ARC-Challenge from Hugging Face
+        questions = SampleDatasets.load_arc_challenge_dataset(num_questions=sample_size)
     elif dataset_type == "fact_verification":
         questions = SampleDatasets.get_fact_verification_sample()
     elif dataset_type == "mixed":

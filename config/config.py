@@ -63,12 +63,12 @@ class DebateConfig:
     debater_b_role: str = "opponent"
     
     # Task domain
-    task_domain: str = "commonsense_qa"  # or "fact_verification"
+    task_domain: str = "commonsense_qa"  # ARC-Challenge from Hugging Face
     
     # Dataset configuration
-    sample_size: int = 200  # 100-200 as per assignment (using StrategyQA from GitHub)
+    sample_size: int = 200  # 100-200 as per assignment (using ARC-Challenge from Hugging Face)
     final_sample_size: int = 200  # 100-200 as per assignment
-    dataset_name: str = "strategy_qa"  # or "arc_challenge", "scifact"
+    dataset_name: str = "arc_challenge"  # ARC-Challenge dataset
 
 
 # ============================================================================
@@ -288,9 +288,9 @@ def get_debug_config() -> Config:
 
 
 def get_production_config() -> Config:
-    """Get configuration for production (full experiment with 200 StrategyQA questions)"""
+    """Get configuration for production (full experiment with 200 ARC-Challenge questions)"""
     config = Config()
-    config.debate.sample_size = 200  # Load 200 questions from StrategyQA GitHub
+    config.debate.sample_size = 200  # Load 200 questions from ARC-Challenge (Hugging Face)
     config.debate.final_sample_size = 200  # 100-200 as per assignment
     config.debate.num_rounds = 5
     config.baseline.self_consistency_samples = 5
