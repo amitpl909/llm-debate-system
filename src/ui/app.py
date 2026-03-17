@@ -4,7 +4,12 @@ Allows users to view debates, jury verdicts, and results
 """
 
 import os
+import sys
 import json
+
+# Add parent directory to path to allow imports from project root
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from flask import Flask, render_template_string, request, jsonify
 from datetime import datetime
 import logging
