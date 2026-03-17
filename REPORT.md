@@ -59,6 +59,20 @@ Examples:
 
 All baselines match the total number of LLM calls in the debate system (~10 calls per question for fair comparison).
 
+### 1.6 Tool Disclosure & AI Assistance
+
+**Tools Used**:
+- **GitHub Copilot**: Used for code generation assistance during implementation of core debate orchestration, judge logic, and evaluation metrics
+- **Claude 3 (Haiku)**: Used as the primary LLM provider for all debate agents, judges, and baseline methods
+- **Anthropic API**: All LLM calls routed through official Anthropic API with proper authentication
+
+**Purpose of Tools**:
+- Copilot assisted with boilerplate code generation, function scaffolding, and documentation templates
+- Claude models serve as the actual debate participants and judges in the experimental system
+- All tool usage followed assignment disclosure policies and academic integrity guidelines
+
+**Transparency Note**: This disclosure ensures full transparency about computational resources and AI assistance used in both building and evaluating this system. The core intellectual contribution—the multi-agent debate design, jury deliberation protocol, and evaluation framework—remains original work.
+
 ---
 
 ## 2. Experiments (3 pages)
@@ -558,10 +572,3 @@ RESPONSE_TO_OPPONENT:
 UPDATED_ANSWER:
 [Has your position changed? State your current answer]
 ```
-
----
-
-END OF BLOG POST & APPENDIX
-
-**Word Count**: ~2500 words (blog post + appendix)  
-**Note**: This implements all required components per assignment rubric. Actual experimental results would be populated after running on full dataset.
