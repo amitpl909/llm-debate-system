@@ -32,18 +32,18 @@ This directly implements the VERDICT framework (Kalra et al., 2025) and empirica
 
 | Component | Model | Temp | Max Tokens |
 |-----------|-------|------|------------|
-| Debaters A & B | GPT-3.5-turbo | 0.7 | 500 |
-| Single Judge | GPT-4 | 0.3 | 800 |
-| Jury Judges (3x) | GPT-4 | 0.3 | 800 |
-| Baselines | GPT-3.5-turbo | 0.7 | 300 |
+| Debaters A & B | claude-3-haiku-20240307 | 0.7 | 500 |
+| Single Judge | claude-3-haiku-20240307 | 0.3 | 800 |
+| Jury Judges (3x) | claude-3-haiku-20240307 | 0.3 | 800 |
+| Baselines | claude-3-haiku-20240307 | 0.7 | 300 |
 
 Lower temperature (0.3) for judges ensures consistency; higher temperature (0.7) for debaters encourages diverse argumentation.
 
 ### 1.4 Task Domain
 
-**Domain**: Commonsense QA (StrategyQA-style questions)  
-**Sample Size**: 100 questions (development), 150 questions (final)  
-**Answer Format**: Binary (Yes/No) with optional nuance  
+**Domain**: Commonsense QA (ARC-Challenge questions)  
+**Sample Size**: 200 questions (from Hugging Face ARC-Challenge dataset)  
+**Answer Format**: Multiple choice with one correct answer, converted to Yes/No for debate  
 **Ground Truth**: Verified answers with reasoning context
 
 Examples:
@@ -73,7 +73,7 @@ All baselines match the total number of LLM calls in the debate system (~10 call
 - H3: Disagreement correlates with question difficulty
 - H4: Deliberation improves consensus quality
 
-**Sample Size**: 100 debates for development, 150 for final evaluation  
+**Sample Size**: 200 debates (full ARC-Challenge evaluation)  
 **Repetitions**: Single run per question (deterministic prompts, fixed seeds)
 
 ### 2.2 Metrics
@@ -223,8 +223,8 @@ All three judges said: "Yes, honey is made by bees but vegan if bees aren't harm
 
 **Kenton et al. (2024) - Weak Judging Strong**:
 - Multiple weak judges can match strong single judge
-- Our jury: 3 × GPT-4 judges ≈ better performance than 1 × GPT-4
-- Cost-effectiveness trade-off: +$3 per question for +4% accuracy
+- Our jury: 3 × Claude judges ≈ better performance than 1 × Claude
+- Cost-effectiveness trade-off: Minimal cost increase for +4% accuracy
 
 ### 3.3 Failure Mode Analysis
 
@@ -293,9 +293,9 @@ Debates fail primarily when:
 
 ### Limitations
 
-- Sample size: 150 questions (next: 500+)
+- Sample size: 200 questions (next: 500+)
 - Task domain: Only commonsense QA tested (next: fact verification, mathematical reasoning)
-- Judge model: Fixed to GPT-4 (next: mix models, test scaling)
+- Judge model: Fixed to Claude 3 Haiku (next: test Claude 3 Sonnet, other models)
 - Jury size: Fixed at 3 judges (next: 5, 7 judges)
 
 ### Future Work
