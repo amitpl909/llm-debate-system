@@ -385,11 +385,18 @@ HTML_TEMPLATE = """
                     return;
                 }
                 
-                displayResults(data);
+                try {
+                    displayResults(data);
+                } catch (renderError) {
+                    document.getElementById('debate-results').innerHTML = 
+                        `<div class="error">Error displaying results: ${renderError.message}</div>`;
+                    console.error('Render error:', renderError);
+                }
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('debate-results').innerHTML = 
                     `<div class="error">Error: ${error.message}</div>`;
+                console.error('API error:', error);
             }
         }
         
@@ -429,9 +436,10 @@ HTML_TEMPLATE = """
             }
             
             if (data.jury_panel) {
-                const jury = data.jury_panel;
+                const jury = data.jury_panel || {};
+                const confidence = jury.confidence ? parseFloat(jury.confidence).toFixed(1) : 'N/A';
                 html += `<div class="section">
-                    <h2>Jury Panel Verdict (${jury.num_judges} Judges)</h2>
+                    <h2>Jury Panel Verdict (${jury.num_judges || 3} Judges)</h2>
                     <div class="verdict-card">
                         <div class="verdict-info">
                             <div class="info-item">
@@ -440,7 +448,7 @@ HTML_TEMPLATE = """
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Confidence</div>
-                                <div class="info-value">${jury.confidence.toFixed(1)}/5</div>
+                                <div class="info-value">${confidence}${confidence !== 'N/A' ? '/5' : ''}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Unanimous</div>
@@ -448,11 +456,11 @@ HTML_TEMPLATE = """
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Agreement Level</div>
-                                <div class="info-value">${(jury.agreement_level * 100).toFixed(0)}%</div>
+                                <div class="info-value">${jury.agreement_level ? (jury.agreement_level * 100).toFixed(0) + '%' : 'N/A'}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Correct</div>
-                                <div class="info-value">${jury.correct !== null ? (jury.correct ? '✓ YES' : '✗ NO') : 'N/A'}</div>
+                                <div class="info-value">${jury.correct !== null && jury.correct !== undefined ? (jury.correct ? '✓ YES' : '✗ NO') : 'N/A'}</div>
                             </div>
                         </div>
                     </div>
@@ -463,8 +471,9 @@ HTML_TEMPLATE = """
         }
         
         function escapeHtml(text) {
+            if (!text) return 'N/A';
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, m => map[m]);
+            return String(text).replace(/[&<>"']/g, m => map[m]);
         }
     </script>
 </body>
@@ -576,16 +585,22 @@ def run_debate_api():
         }
         
         if session.judge_verdict:
-            result['single_judge'] = session.judge_verdict
+            result['single_judge'] = {
+                'judge_id': session.judge_verdict.get('judge_id', 'N/A'),
+                'answer': session.judge_verdict.get('winning_answer', 'N/A'),
+                'confidence': session.judge_verdict.get('confidence', 0),
+                'correct': session.judge_verdict.get('winning_answer', '').lower().strip() == ground_truth.lower().strip() if ground_truth else None
+            }
         
         if session.jury_consensus:
+            consensus_answer = session.jury_consensus.get('consensus_answer', 'N/A')
             result['jury_panel'] = {
-                'num_judges': session.jury_consensus['num_judges'],
-                'answer': session.jury_consensus['consensus_answer'],
-                'confidence': session.jury_consensus['consensus_confidence'],
-                'unanimous': session.jury_consensus['disagreement_analysis']['unanimous'],
-                'agreement_level': session.jury_consensus['disagreement_analysis']['agreement_level'],
-                'correct': session.jury_consensus['consensus_answer'].lower().strip() == ground_truth.lower().strip() if ground_truth else None
+                'num_judges': session.jury_consensus.get('num_judges', 3),
+                'answer': consensus_answer,
+                'confidence': session.jury_consensus.get('consensus_confidence', 0),
+                'unanimous': session.jury_consensus.get('disagreement_analysis', {}).get('unanimous', False),
+                'agreement_level': session.jury_consensus.get('disagreement_analysis', {}).get('agreement_level', 0),
+                'correct': str(consensus_answer).lower().strip() == str(ground_truth).lower().strip() if ground_truth else None
             }
         
         return jsonify(result)
