@@ -1,8 +1,8 @@
 # LLM Debate with Multi-Agent Judge Jury Panel: A Study on Adversarial Reasoning and Consensus
 
-**author**: Graduate Student  
-**date**: March 2026  
-**course**: LLM & Agentic Systems  
+**author**: Amit Paul  
+**date**: 3/16/2026  
+**course**: NLP (Natural Language Processing) - Assignment 2: LLM Debate with Judge Pipeline  
 **instructor**: Dr. Peyman Najafirad  
 
 ---
@@ -11,7 +11,7 @@
 
 ### 1.1 System Architecture
 
-We implement a complete 4-phase debate pipeline:
+I implement a complete 4-phase debate pipeline:
 
 - **Phase 1 (Initialization)**: Two LLM agents independently generate initial positions on a question
 - **Phase 2 (Multi-Round Debate)**: N ≥ 3 rounds of structured argument-counterargument exchanges

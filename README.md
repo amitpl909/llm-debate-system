@@ -343,8 +343,10 @@ MIT License - See LICENSE file
 
 ## Authors
 
-Created for LLM & Agentic Systems Graduate Course
-Instructor: Dr. Peyman Najafirad
-TA: Mohammad Bahrami
+**Author**: Amit Paul  
+**Course**: NLP (Natural Language Processing) - Assignment 2: LLM Debate with Judge Pipeline  
+**Date**: 3/16/2026  
+**Instructor**: Dr. Peyman Najafirad  
+**TA**: Mohammad Bahrami
 
 Implementation uses Claude/Copilot for code generation assistance (disclosed per assignment policies).

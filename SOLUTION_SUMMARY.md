@@ -4,8 +4,11 @@
 
 This is a **complete, production-ready implementation** of an LLM Debate System with a Multi-Agent Judge Jury Panel that fulfills all assignment requirements and implements the **BONUS +15% feature** for multi-judge consensus.
 
-**Assignment**: LLM & Agentic Systems - Assignment 2: LLM Debate with Judge Pipeline  
+**Author**: Amit Paul  
+**Course**: NLP (Natural Language Processing)  
+**Assignment**: Assignment 2: LLM Debate with Judge Pipeline  
 **Due**: March 16, 2026  
+**Date Completed**: 3/16/2026  
 **Bonus Feature**: 3+ Judge Jury Panel with Deliberation (VERDICT Framework)
 
 ---
@@ -559,7 +562,8 @@ This is a **complete, production-ready implementation** that:
 
 ---
 
-**Created for**: LLM & Agentic Systems Graduate Course  
+**Created for**: NLP (Natural Language Processing) - Assignment 2: LLM Debate with Judge Pipeline  
+**Author**: Amit Paul  
 **Instructor**: Dr. Peyman Najafirad  
 **TA**: Mohammad Bahrami  
-**Date**: March 2026
+**Date**: 3/16/2026
