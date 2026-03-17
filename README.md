@@ -74,8 +74,11 @@ pip install -r requirements.txt
 ### 2. Configure API Keys
 
 ```bash
-# Set OpenAI API key
-export OPENAI_API_KEY="sk-..."  # On Windows: set OPENAI_API_KEY=sk-...
+# Set Anthropic API key (recommended)
+export ANTHROPIC_API_KEY="sk-ant-..."  # On Windows: set ANTHROPIC_API_KEY=sk-ant-...
+
+# Alternatively, create a .env file in project root:
+# ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
 ### 3. Run Experiments
@@ -84,11 +87,17 @@ export OPENAI_API_KEY="sk-..."  # On Windows: set OPENAI_API_KEY=sk-...
 # Debug mode (5 questions, 3 rounds)
 python main.py --debug
 
-# Production mode (150 questions, 5 rounds)
+# Production mode (200 questions, 5 rounds)
 python main.py
+```
 
-# Run web UI
+### 4. Run Web UI
+
+```bash
+# Start the Flask web application
 python src/ui/app.py
+
+# Then open browser to http://localhost:8000
 ```
 
 ## Configuration
@@ -98,10 +107,13 @@ Edit `config/config.py` to customize:
 ### Model Configuration
 ```python
 ModelConfig:
-  - debater_model: "gpt-3.5-turbo" or "gpt-4"
-  - judge_model: "gpt-4"
-  - temperature: 0.7
-  - max_tokens: 500/800
+  - provider: "anthropic" (default) or "openai"
+  - debater_model: "claude-3-haiku-20240307"
+  - judge_model: "claude-3-haiku-20240307"
+  - debater_temperature: 0.7
+  - judge_temperature: 0.3
+  - max_tokens_debater: 500
+  - max_tokens_judge: 800
 ```
 
 ### Debate Configuration
@@ -110,7 +122,7 @@ DebateConfig:
   - num_rounds: 5 (N >= 3 as per assignment)
   - enable_early_stopping: True
   - convergence_rounds: 2
-  - task_domain: "commonsense_qa" or "fact_verification"
+  - sample_size: 5 (debug) or 200 (production)
 ```
 
 ### Jury Panel Configuration
@@ -239,22 +251,144 @@ Based on prior work (Irving et al., Liang et al., Kenton et al.):
 2. **Jury Panel ≥ Self-Consistency**: Structured debate should match or exceed multiple independent samples
 3. **Agreement Correlates with Accuracy**: Questions where judges disagree tend to be harder
 
+## Web UI / Flask Application
+
+### Starting the Web UI
+
+```bash
+# Ensure you're in the virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the Flask application from project root
+python src/ui/app.py
+```
+
+You should see output like:
+```
+ * Serving Flask app 'app'
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Press CTRL+C to quit
+```
+
+### Accessing the UI
+
+Open your web browser and navigate to:
+- **Local (Recommended)**: http://localhost:8000
+- **Network Access**: http://192.168.1.X:8000 (replace X with your machine's IP)
+
+### Using the Web UI
+
+1. **Enter a Question**: Type any yes/no question in the text area
+   - Example: "Can a penguin swim faster than a salmon?"
+   - Example: "Is the Earth flat?"
+
+2. **Add Context** (Optional): Provide background information
+   - Helps judges better understand the question
+   - Example: "Average penguin swimming speed is 20 mph, salmon is 30 mph"
+
+3. **Provide Ground Truth** (Optional): Enter the correct answer
+   - Used to verify accuracy after debate concludes
+   - Example: "No"
+
+4. **Configure Options**:
+   - ☑ **Enable Jury Panel**: Run with 3 judges conducting deliberation for consensus
+   - ☑ **Enable Single Judge**: Run with single judge baseline for comparison
+
+5. **Click "Start Debate"**: System will:
+   - Initialize 2 debaters with independent positions
+   - Run 3 debate rounds (shorter than production 5 rounds for UI speed)
+   - Generate individual judge verdicts
+   - Conduct jury deliberation if enabled
+   - Display results with accuracy comparison
+
+### UI Display Sections
+
+1. **Debate Summary Panel**
+   - Shows rounds completed and current status
+   - Displays ground truth if provided
+   - Shows accuracy against ground truth
+
+2. **Judge Verdicts Panel**
+   - Individual verdict from each judge
+   - Confidence score (1-5 scale)
+   - Judge reasoning and analysis
+
+3. **Jury Panel Results** (if enabled)
+   - Consensus answer from jury
+   - Unanimity percentage
+   - Agreement level
+   - Number of judges who agreed
+
+4. **Method Comparison** (if baselines enabled)
+   - Accuracy percentages for each method
+   - Helps evaluate debate system effectiveness
+
+### UI Troubleshooting
+
+**Port 8000 Already in Use:**
+```python
+# Option 1: Use a different port in src/ui/app.py (line ~595)
+app.run(debug=True, port=8001, host='0.0.0.0')
+
+# Option 2: Kill process on Linux/Mac
+lsof -ti:8000 | xargs kill -9
+
+# Option 3: On Windows, find process using port
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+```
+
+**Chrome Security Warning for Localhost:**
+- This is normal - click "Proceed" or "Advanced"
+- Only appears on fresh browser sessions
+
+**API Key Not Found Error:**
+- Verify `.env` file exists in project root (not in llm_debate_system folder)
+- Check key is set: `echo %ANTHROPIC_API_KEY%` (Windows) or `echo $ANTHROPIC_API_KEY` (Linux/Mac)
+- Restart Flask after changing environment variables
+
+**Import or ModuleNotFoundError:**
+- Ensure virtual environment is activated
+- Reinstall requirements: `pip install -r requirements.txt`
+
 ## Code Examples
 
 ### Running a Single Debate
 
 ```python
-from config.config import Config
+from config.config import Config, get_debug_config
 from src.llm_client import create_llm_client
 from src.agents.debater import ProponentDebater, OpponentDebater
 from src.judges.judge import Judge
 from src.orchestrator.debate_orchestrator import DebateOrchestrator
 
-# Setup
-config = Config()
-debater_a_client = create_llm_client(model="gpt-4")
-debater_b_client = create_llm_client(model="gpt-4")
-judge_client = create_llm_client(model="gpt-4")
+# Setup with debug configuration
+config = get_debug_config()
+api_key = config.model.anthropic_api_key
+
+# Create LLM clients with Claude 3 Haiku
+debater_a_client = create_llm_client(
+    model="claude-3-haiku-20240307",
+    api_key=api_key,
+    temperature=0.7,
+    max_tokens=500,
+    provider="anthropic"
+)
+debater_b_client = create_llm_client(
+    model="claude-3-haiku-20240307",
+    api_key=api_key,
+    temperature=0.7,
+    max_tokens=500,
+    provider="anthropic"
+)
+judge_client = create_llm_client(
+    model="claude-3-haiku-20240307",
+    api_key=api_key,
+    temperature=0.3,
+    max_tokens=800,
+    provider="anthropic"
+)
 
 # Create agents
 debater_a = ProponentDebater(debater_a_client)
@@ -280,54 +414,82 @@ orchestrator.run_complete_debate(session)
 ```python
 from src.judges.judge import JuryPanel, Judge
 
-# Create judges
+# Create multiple judge clients with Claude 3 Haiku
 judges = [
-    Judge(f"judge_{i}", create_llm_client("gpt-4"))
+    Judge(f"judge_{i}", create_llm_client(
+        model="claude-3-haiku-20240307",
+        api_key=api_key,
+        temperature=0.3,
+        max_tokens=800,
+        provider="anthropic"
+    ))
     for i in range(3)
 ]
 
-# Create jury panel
+# Create jury panel with deliberation
 jury = JuryPanel(
     judges=judges,
     enable_deliberation=True,
     voting_strategy="majority"
 )
 
-# Run jury evaluation
-verdicts = jury.conduct_initial_evaluation(question, debate_transcript)
-disagreement = jury.analyze_disagreement()
+# Run jury evaluation workflow
+initial_verdicts = jury.conduct_initial_evaluation(question, debate_transcript)
+disagreement_analysis = jury.analyze_disagreement()
 jury.conduct_deliberation(question, debate_transcript, rounds=2)
-consensus = jury.reach_consensus(question, debate_transcript)
+final_consensus = jury.reach_consensus(question, debate_transcript)
+
+print(f"Final Answer: {final_consensus['consensus_answer']}")
+print(f"Unanimous: {final_consensus['disagreement_analysis']['unanimous']}")
+print(f"Agreement Level: {final_consensus['disagreement_analysis']['agreement_level']:.1%}")
 ```
 
 ## API Costs
 
-Estimated costs with GPT-4 and GPT-3.5-turbo:
+Estimated costs with Claude 3 Haiku (Anthropic):
 
-- Single debate (~3-5 rounds):
-  - 1 Single Judge: ~$1.50-2.00
-  - 3 Jury Judges + Deliberation: ~$4.00-5.00
-  - 2 Baselines: ~$0.50-1.00
-  - **Total per debate: ~$6-8**
+- **Input tokens**: $0.80 per 1M tokens
+- **Output tokens**: $4.00 per 1M tokens
 
-- Full experiment (100 questions):
-  - **Estimated: $600-800**
-  - Can reduce by using GPT-3.5-turbo for debaters/baselines
+Single debate estimate (~50 questions per full workflow):
+- Input: ~8,000-10,000 tokens
+- Output: ~2,000-3,000 tokens
+- **Cost per debate: ~$0.05-0.10** (extremely cost-effective)
+
+Full production experiment (200 questions):
+- **Estimated: $10-20 total** (compared to $600-800 with GPT-4)
+- Claude 3 Haiku provides excellent performance at minimal cost
 
 ## Troubleshooting
+
+### API Key Issues
+- **Error: ANTHROPIC_API_KEY not found**
+  - Create `.env` file in project root with: `ANTHROPIC_API_KEY=sk-ant-...`
+  - Or set environment variable: `export ANTHROPIC_API_KEY="sk-ant-..."`
+  - On Windows: `set ANTHROPIC_API_KEY=sk-ant-...`
+  - Restart Flask/main.py after setting environment variables
 
 ### API Rate Limits
 - System includes automatic retry with exponential backoff
 - Adjust `retry_delay` in `config.py` to increase wait time between retries
+- Claude 3 Haiku has generous rate limits for most use cases
 
-### Out of Memory
-- Reduce `sample_size` in config
-- Use smaller models for development
+### Flask Web UI Issues
+- **Port 8000 already in use**: Change port in `src/ui/app.py` or kill process on port 8000
+- **ModuleNotFoundError (flask, config, etc)**: Ensure virtual environment is activated
+- **Import errors**: Reinstall dependencies: `pip install -r requirements.txt`
+- **Blank page loads**: Clear browser cache and reload, check browser console for errors
+
+### Script Execution Issues
+- **Out of Memory**: Reduce `sample_size` in config or run with `--debug` flag
+- **No results file created**: Check `outputs/` directory exists, verify API key is correct
+- **Session logs not saved**: Ensure `logs/` directory is writable
 
 ### Debugging
-- Run with `--debug` flag: `python main.py --debug`
-- Check logs in `logs/debate_system.log`
-- Enable debug mode in config.py
+- Run with `--debug` flag: `python main.py --debug` (5 questions, faster testing)
+- Check logs in `logs/debate_system.log` for detailed execution logs
+- Check individual session files in `logs/session_*.json` for debate transcripts
+- Enable debug mode in `config.py` for verbose console output
 
 ## References
 
