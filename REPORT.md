@@ -37,6 +37,10 @@ This directly implements the VERDICT framework (Kalra et al., 2025) and empirica
 | Jury Judges (3x) | claude-3-haiku-20240307 | 0.3 | 800 |
 | Baselines | claude-3-haiku-20240307 | 0.7 | 300 |
 
+**Model Choice Rationale**: Claude 3 Haiku was selected for cost-effectiveness (~$0.05-0.10 per debate vs $1-2+ for larger models like Sonnet/Opus). This enables running 200 complete experiments within budget constraints while maintaining reasonable performance on commonsense QA tasks.
+
+**Trade-off Note**: Haiku trades reasoning capability for speed and cost. While effective for many questions, it shows limitations on complex logic/reasoning tasks requiring multi-step inference or semantic understanding of ambiguous statements (see Limitations section for observed error case).
+
 Lower temperature (0.3) for judges ensures consistency; higher temperature (0.7) for debaters encourages diverse argumentation.
 
 ### 1.4 Task Domain
@@ -309,7 +313,12 @@ Debates fail primarily when:
 
 - Sample size: 200 questions (next: 500+)
 - Task domain: Only commonsense QA tested (next: fact verification, mathematical reasoning)
-- Judge model: Fixed to Claude 3 Haiku (next: test Claude 3 Sonnet, other models)
+- **Judge model (Claude 3 Haiku limitations)**: 
+  - Lightweight model chosen for cost-effectiveness (~$0.05-0.10 per debate vs $1-2 for larger models)
+  - Trade-off: Lower reasoning capability on complex logic/inference tasks
+  - **Observed limitation**: Unanimous errors on gender-logic reasoning (e.g., "Sam is Sandy's father, Sandy is not Sam's son" → Correct: Yes; Jury verdict: No with 100% agreement and 4.0/5 confidence)
+  - Recommendation: For complex reasoning tasks, use Claude 3 Sonnet or Opus for improved accuracy
+  - Next: Benchmark with larger models (Claude 3 Sonnet, GPT-4) to quantify accuracy improvement vs. cost trade-off
 - Jury size: Fixed at 3 judges (next: 5, 7 judges)
 
 ### Future Work
